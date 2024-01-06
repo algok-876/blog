@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
+    <link rel="alternate icon" type="image/png" href="/img/favicon.png">
+    <title>algok | </title>
+    
+<link rel="stylesheet" href="/css/reset.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<link rel="stylesheet" href="/css/markdown.css">
+
+    
+<link rel="stylesheet" href="/css/fonts.css">
+
+<meta name="generator" content="Hexo 7.0.0"></head>
+    <body>
+        <div class="paper">
+            <div class="paper-main">
+                
+                    <div class="post-header">
+    <a class="logo" href="/">algok</a>
+    <a class="go-home" href="/">
+        <svg width="8" height="14" viewBox="0 0 8 14">
+            <path d="M7 1L1 7l6 6" stroke="#000" stroke-width="2" fill="none" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </a>
+</div>
+                
+                <div class="post-main">
+
+    
+    
+        <div class="post-main-title">
+            从TS类型体操入手，学习TS
+        </div>
+        <div class="post-meta">
+            2024-01-06
+        </div>
+        <div class="post-md">
+            <p>很早之前就在github上面看到了<a target="_blank" rel="noopener" href="https://github.com/type-challenges/type-challenges">type-challenges</a>这个项目，但一直没去刷，最近准备面试，刚好借此复习一下TS。它的中文名叫 <strong>TypeScript 类型体操姿势合集</strong>，就是像Leetcode那样会有一些题目，然后根据题目要求完成类型的编写并通过测试用例。本文通过一些比较easy的题目，先梳理一下TS中比较基础的类型运算。</p>
+<h2 id="1、实现-Pick"><a href="#1、实现-Pick" class="headerlink" title="1、实现 Pick"></a>1、实现 Pick</h2><h3 id="题目要求"><a href="#题目要求" class="headerlink" title="题目要求"></a>题目要求</h3><p>原题链接：<a target="_blank" rel="noopener" href="https://github.com/type-challenges/type-challenges/blob/main/questions/00004-easy-pick/README.zh-CN.md">00004-easy-pick</a><br>，题目的要求是：不使用 <code>Pick&lt;T, K&gt;</code> ，实现 TS 内置的 <code>Pick&lt;T, K&gt;</code> 的功能，<strong>从类型 <code>T</code> 中选出符合 <code>K</code> 的属性，构造一个新的类型</strong>，T是一个对象类型，K是一个联合类型</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">interface</span> <span class="title class_">Todo</span> &#123;</span><br><span class="line">  <span class="attr">title</span>: <span class="built_in">string</span></span><br><span class="line">  <span class="attr">description</span>: <span class="built_in">string</span></span><br><span class="line">  <span class="attr">completed</span>: <span class="built_in">boolean</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> <span class="title class_">TodoPreview</span> = <span class="title class_">MyPick</span>&lt;<span class="title class_">Todo</span>, <span class="string">&#x27;title&#x27;</span> | <span class="string">&#x27;completed&#x27;</span>&gt;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> <span class="attr">todo</span>: <span class="title class_">TodoPreview</span> = &#123;</span><br><span class="line">    <span class="attr">title</span>: <span class="string">&#x27;Clean room&#x27;</span>,</span><br><span class="line">    <span class="attr">completed</span>: <span class="literal">false</span>,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="大致思路-🤔"><a href="#大致思路-🤔" class="headerlink" title="大致思路 🤔"></a>大致思路 🤔</h3><p>如果从js的角度看的话，不就是给你一组key，然后去指定的对象上选取包含在这组key中的属性嘛。那我们只要循环这组key，然后挨个去取对象上对应的属性不就行了嘛，这道题的类型运算也差不多是这样的思路。</p>
+<h4 id="in-操作符-⚔️"><a href="#in-操作符-⚔️" class="headerlink" title="in 操作符 ⚔️"></a>in 操作符 ⚔️</h4><p>TypeScript 语言的类型运算中，<code>in</code>运算符有不同的用法，用来取出（遍历）联合类型的每一个成员类型。举个例子</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> U = <span class="string">&#x27;a&#x27;</span>|<span class="string">&#x27;b&#x27;</span>|<span class="string">&#x27;c&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> <span class="title class_">Foo</span> = &#123;</span><br><span class="line">  [<span class="title class_">Prop</span> <span class="keyword">in</span> U]: <span class="built_in">number</span>;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="comment">// 等同于</span></span><br><span class="line"><span class="keyword">type</span> <span class="title class_">Foo</span> = &#123;</span><br><span class="line">  <span class="attr">a</span>: <span class="built_in">number</span>,</span><br><span class="line">  <span class="attr">b</span>: <span class="built_in">number</span>,</span><br><span class="line">  <span class="attr">c</span>: <span class="built_in">number</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>其实就可以认为是一种循环，循环遍历联合类型<code>U</code>。</p>
+<h4 id="keyof-操作符-⚔️"><a href="#keyof-操作符-⚔️" class="headerlink" title="keyof 操作符 ⚔️"></a>keyof 操作符 ⚔️</h4><p>keyof 是一个单目运算符，用于将对象类型的键组合成一个联合类型。</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">interface</span> T &#123;</span><br><span class="line">  <span class="number">0</span>: <span class="built_in">boolean</span>;</span><br><span class="line">  <span class="attr">a</span>: <span class="built_in">string</span>;</span><br><span class="line">  <span class="title function_">b</span>(): <span class="built_in">void</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> <span class="title class_">KeyT</span> = keyof T; <span class="comment">// 0 | &#x27;a&#x27; | &#x27;b&#x27;</span></span><br></pre></td></tr></table></figure>
+<h4 id="方括号运算符-⚔️"><a href="#方括号运算符-⚔️" class="headerlink" title="方括号运算符 ⚔️"></a>方括号运算符 ⚔️</h4><p>方括号运算符（<code>[]</code>）用于取出对象的键值类型，比如<code>T[K]</code>会返回对象<code>T</code>的属性<code>K</code>的类型。</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> <span class="title class_">Person</span> = &#123;</span><br><span class="line">  <span class="attr">age</span>: <span class="built_in">number</span>;</span><br><span class="line">  <span class="attr">name</span>: <span class="built_in">string</span>;</span><br><span class="line">  <span class="attr">alive</span>: <span class="built_in">boolean</span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Age 的类型是 number</span></span><br><span class="line"><span class="keyword">type</span> <span class="title class_">Age</span> = <span class="title class_">Person</span>[<span class="string">&#x27;age&#x27;</span>];</span><br></pre></td></tr></table></figure>
+<p>不要把这个方括号里的<code>age</code>理解成字符串，<code>age</code>是一个值类型，它是一个类型！！！把他换成一个类型别名也是可以的</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> <span class="title class_">Person</span> = &#123;</span><br><span class="line">  <span class="attr">age</span>: <span class="built_in">number</span>;</span><br><span class="line">  <span class="attr">name</span>: <span class="built_in">string</span>;</span><br><span class="line">  <span class="attr">alive</span>: <span class="built_in">boolean</span>;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">type</span> key = <span class="string">&#x27;age&#x27;</span></span><br><span class="line"><span class="comment">// Age 的类型是 number</span></span><br><span class="line"><span class="keyword">type</span> <span class="title class_">Age</span> = <span class="title class_">Person</span>[key];</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>这一点可以很好的理解这道题目的代码</p>
+</blockquote>
+<h3 id="答案-📄"><a href="#答案-📄" class="headerlink" title="答案 📄"></a>答案 📄</h3><p>答案已经呼之欲出了，用<code>in</code>操作符遍历第二个参数<code>K</code>，然后使用方括号取到对应属性的类型</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> <span class="title class_">MyPick</span>&lt;T, K <span class="keyword">extends</span> keyof T&gt; = &#123;</span><br><span class="line">  [key <span class="keyword">in</span> K]: T[key]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>keyof T</code>将<code>T</code>中的所有键转换成一个联合类型，<code>extends</code>用来约束K必须是<code>keyof T</code>的子集。这样做的目的是确保<code>K</code>中的每个分量在<code>T</code>中都存在对应的键。</p>
+<p>搞定，下一题😎</p>
+<h2 id="2、对象属性只读"><a href="#2、对象属性只读" class="headerlink" title="2、对象属性只读"></a>2、对象属性只读</h2><p>篇幅原因就不描述题目要求了，可以直接查看原题链接：<a target="_blank" rel="noopener" href="https://github.com/type-challenges/type-challenges/blob/main/questions/00007-easy-readonly/README.zh-CN.md">00007-easy-readonly</a></p>
+<h3 id="大致思路-🤔-1"><a href="#大致思路-🤔-1" class="headerlink" title="大致思路 🤔"></a>大致思路 🤔</h3><p>和上一道题做法差不多，不同的是新返回的对象和原来的在结构上是一模一样的，而且每个属性都变成了只读的。</p>
+<h4 id="readonly"><a href="#readonly" class="headerlink" title="readonly"></a>readonly</h4><p><code>readonly</code>可以防止对象的属性被更改</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> <span class="title class_">Person</span> = &#123;</span><br><span class="line">  <span class="keyword">readonly</span> <span class="attr">age</span>: <span class="built_in">number</span>;</span><br><span class="line">  <span class="attr">name</span>: <span class="built_in">string</span>;</span><br><span class="line">  <span class="attr">alive</span>: <span class="built_in">boolean</span>;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">const</span> <span class="attr">person</span>: <span class="title class_">Person</span> = &#123;</span><br><span class="line">    <span class="attr">age</span>: <span class="number">18</span>,</span><br><span class="line">    <span class="attr">name</span>: <span class="string">&#x27;jack&#x27;</span>,</span><br><span class="line">    <span class="attr">alive</span>: <span class="literal">true</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 报错 Cannot assign to &#x27;age&#x27; because it is a read-only property.</span></span><br><span class="line">person.<span class="property">age</span> = <span class="number">99</span></span><br></pre></td></tr></table></figure>
+
+
+<h3 id="答案-📄-1"><a href="#答案-📄-1" class="headerlink" title="答案 📄"></a>答案 📄</h3><figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> <span class="title class_">MyReadonly</span>&lt;T&gt; = &#123;</span><br><span class="line">  <span class="keyword">readonly</span> [K <span class="keyword">in</span> keyof T]: T[K]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>就是给每个属性加上<code>readonly</code>修饰</p>
+<blockquote>
+<p>可以思考一下，为什么这里没有出现<code>K extends keyof T</code>呢。答案很简单，因为这里的<code>K</code>就是从<code>T</code>中取出来的不需要额外约束TS就知道<code>T[K]</code>是合法的。前面一道题必须要约束一下，否则<code>K</code>不能用于<code>in</code>操作符，<code>key</code>也不能作为<code>T</code>的索引。</p>
+</blockquote>
+<h2 id="3、元组转换为对象"><a href="#3、元组转换为对象" class="headerlink" title="3、元组转换为对象"></a>3、元组转换为对象</h2><p>原题链接：<a target="_blank" rel="noopener" href="https://github.com/type-challenges/type-challenges/blob/main/questions/00011-easy-tuple-to-object/README.zh-CN.md">00011-easy-tuple-to-object</a>，这道题就开始有点意思了。要先了解一下元组这个类型和方括号运算符的高级用法</p>
+<h4 id="元组-⚔️"><a href="#元组-⚔️" class="headerlink" title="元组 ⚔️"></a>元组 ⚔️</h4><p>元组类型是另一种类型 <code>Array</code> 类型，它确切地知道它包含多少元素，以及它在特定位置包含哪些类型。这一点和数组很不一样，数组的长度是未知的，而且并不能够知道每个索引位置的类型。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">type tuple = [string, number, boolean]</span><br><span class="line">const tup: tuple = [&#x27;1&#x27;, 1, true]</span><br><span class="line"></span><br><span class="line">// 报错 Type &#x27;number&#x27; is not assignable to type &#x27;string&#x27;</span><br><span class="line">const tup2: tuple = [1, 1, true]</span><br></pre></td></tr></table></figure>
+<p>tup2中的元素的类型并没有和tuple类型中一一对应，除此之外元素个数也要相等才能赋值。从对象的角度来看元组这个东西，其实就有点像一个<strong>键为数字的对象</strong>。</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> tuple = &#123;</span><br><span class="line">    <span class="number">0</span>: <span class="built_in">string</span>,</span><br><span class="line">    <span class="number">1</span>: <span class="built_in">number</span>,</span><br><span class="line">    <span class="number">2</span>: <span class="built_in">boolean</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">const</span> <span class="attr">tup</span>: tuple = [<span class="string">&#x27;1&#x27;</span>, <span class="number">1</span>, <span class="literal">true</span>]</span><br></pre></td></tr></table></figure>
+<p>这是可行的，和元组表达的意思也是一致的，第一个位置的元素类型为<code>stirng</code>，第二个位置的元素类型为<code>number</code>，第三个位置的元素类型为<code>boolean</code>。</p>
+<h4 id="方括号运算符-⚔️-1"><a href="#方括号运算符-⚔️-1" class="headerlink" title="方括号运算符 ⚔️"></a>方括号运算符 ⚔️</h4><p>前面提到的方括号运算符里面可以是对象的某个键名（其实也是一个值类型），但也可以是一个索引类型，这样的话最终返回的结果就不是单个类型了，而是该索引类型（就是键的类型）对应的所有的元素的类型组合而成的联合类型。</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">示例<span class="number">1</span>：</span><br><span class="line"><span class="keyword">interface</span> <span class="title class_">Test</span> &#123;</span><br><span class="line">    [<span class="attr">p</span>: <span class="built_in">string</span>]: <span class="built_in">number</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// number</span></span><br><span class="line"><span class="keyword">type</span> stringTypes = <span class="title class_">Test</span>[<span class="built_in">string</span>]</span><br><span class="line"></span><br><span class="line">示例<span class="number">2</span>：</span><br><span class="line"><span class="keyword">type</span> tuple = [<span class="string">&#x27;1&#x27;</span>, <span class="number">1</span>, <span class="literal">true</span>]</span><br><span class="line"><span class="comment">// true | &quot;1&quot; | 1</span></span><br><span class="line"><span class="keyword">type</span> allTypes = tuple[<span class="built_in">number</span>]</span><br></pre></td></tr></table></figure>
+<p>第一个示例中的最终取得的类型是<code>number</code>，因为含有string类型的索引签名对应的属性类型就是number。</p>
+<p>第二个示例中会得到元组中所有元素的类型组成的联合类型，因为其实元组的索引都是number类型的，所以可以一次全部取到所有元素的类型。</p>
+<h3 id="答案-📄-2"><a href="#答案-📄-2" class="headerlink" title="答案 📄"></a>答案 📄</h3><p>前面铺垫了那么多就是为了解这道题目的，先给出答案。</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> <span class="title class_">TupleToObject</span>&lt;T <span class="keyword">extends</span> <span class="keyword">readonly</span> <span class="built_in">any</span>[]&gt; = &#123;</span><br><span class="line">  [P <span class="keyword">in</span> T[<span class="built_in">number</span>]]: P</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="解析"><a href="#解析" class="headerlink" title="解析"></a>解析</h3><ul>
+<li><code>in</code>操作符就不用讲了吧</li>
+<li><code>T[number]</code>的作用就是获取元组所有元素对应的类型，返回一个联合类型，那这刚好不就可以用in来遍历嘛，然后每遍历到的一个类型同时作为键和值即可。</li>
+</ul>
+<h2 id="4、实现-Exclude"><a href="#4、实现-Exclude" class="headerlink" title="4、实现 Exclude"></a>4、实现 Exclude</h2><p>原题链接：<a target="_blank" rel="noopener" href="https://tsch.js.org/43/zh-CN">00043-easy-exclude</a>，这道题看似有点摸不着头脑，但是掌握相关知识点就会变得很简单。</p>
+<h3 id="大致思路-🤔-2"><a href="#大致思路-🤔-2" class="headerlink" title="大致思路 🤔"></a>大致思路 🤔</h3><p>这道题给我们两个联合类型<code>T</code>和<code>U</code>（可以把联合类型看成是一个类型集合），求存在<code>T</code>中而不存在于<code>U</code>中的类型，从集合的角度来讲就是<code>T - U</code>，求差集。要求差集，先解决两个问题：1、如何判断T中的某个类型是否存在于U中。2、如何去除T中存在于U中的类型。</p>
+<h4 id="条件类型-⚔️"><a href="#条件类型-⚔️" class="headerlink" title="条件类型 ⚔️"></a>条件类型 ⚔️</h4><p>条件类型可以根据类型输入来判断返回何种类型</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">示例<span class="number">1</span>：</span><br><span class="line"><span class="comment">// 报错 Type &#x27;&quot;message&quot;&#x27; cannot be used to index type &#x27;T&#x27;.</span></span><br><span class="line"><span class="keyword">type</span> <span class="title class_">MessageOf</span>&lt;T&gt; = T[<span class="string">&quot;message&quot;</span>];</span><br><span class="line"><span class="comment">// 正确的做法，extends约束了T必须有一个message的属性</span></span><br><span class="line"><span class="keyword">type</span> <span class="title class_">MessageOf</span>&lt;T <span class="keyword">extends</span> &#123; <span class="attr">message</span>: <span class="built_in">unknown</span> &#125;&gt; = T[<span class="string">&quot;message&quot;</span>];</span><br><span class="line"></span><br><span class="line">示例<span class="number">2</span>：</span><br><span class="line"><span class="keyword">type</span> <span class="title class_">MessageOf</span>&lt;T&gt; = T <span class="keyword">extends</span> &#123; <span class="attr">message</span>: <span class="built_in">unknown</span> &#125; ? T[<span class="string">&quot;message&quot;</span>] : <span class="built_in">never</span>;</span><br></pre></td></tr></table></figure>
+<p>示例2，泛型<code>T</code>就是输入类型，先判断<code>T</code>是否满足<code>&#123; message: unknown &#125;</code>的约束，如果T存在<code>message</code>属性，就返回<code>message</code>属性的类型，否则返回<code>never</code>。</p>
+<p>如果T是一个联合类型，就会出现分布式条件的情况</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> <span class="title class_">ToArray</span>&lt;<span class="title class_">Type</span>&gt; = <span class="title class_">Type</span> <span class="keyword">extends</span> <span class="built_in">any</span> ? <span class="title class_">Type</span>[] : <span class="built_in">never</span>;</span><br><span class="line"><span class="keyword">type</span> <span class="title class_">StrArrOrNumArr</span> = <span class="title class_">ToArray</span>&lt;<span class="built_in">string</span> | <span class="built_in">number</span>&gt;;  <span class="comment">// string[] | number[]</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 等价于</span></span><br><span class="line"><span class="keyword">type</span> <span class="title class_">StrArrOrNumArr</span> = (<span class="built_in">string</span> <span class="keyword">extends</span> <span class="built_in">any</span> ? <span class="built_in">string</span>[] : <span class="built_in">never</span>)</span><br><span class="line">| (<span class="built_in">number</span> <span class="keyword">extends</span> <span class="built_in">any</span> ? <span class="built_in">number</span>[] : <span class="built_in">never</span>)</span><br></pre></td></tr></table></figure>
+<p>这两种情况是等价的，也就是说分布式条件会对联合类型中的每个类型都判断一次，并且运算的结果也是联合类型。<strong>那么我们可以利用这一点来判断T中的类型是否存在于U中，即T中的每个类型是否满足U的约束。</strong></p>
+<h3 id="答案-📄-3"><a href="#答案-📄-3" class="headerlink" title="答案 📄"></a>答案 📄</h3><figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> <span class="title class_">MyExclude</span>&lt;T, U&gt; = T <span class="keyword">extends</span> U ? <span class="built_in">never</span> : T</span><br></pre></td></tr></table></figure>
+<p>当<code>T</code>中的类型存在于<code>U</code>中时，就返回<code>never</code>是为了剔除掉这个类型。举个例子再结合上面所讲的条件类型，应该会比较清晰了。</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> excludeNever = <span class="built_in">string</span> | <span class="built_in">never</span> | <span class="built_in">number</span>  <span class="comment">// string | number</span></span><br></pre></td></tr></table></figure>
+<p>可以看到最终生成的联合类型是没有<code>never</code>的。</p>
+<p>现在假设<code>T=&#39;a&#39; | &#39;b&#39; | &#39;c&#39;</code>，<code>U=&#39;a&#39;</code>，那么答案给出的代码就等价于</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">(&#x27;a&#x27; extends &#x27;a&#x27; ? never : &#x27;a&#x27;)</span><br><span class="line">| (&#x27;b&#x27; extends &#x27;a&#x27; ? never : &#x27;b&#x27;)</span><br><span class="line">| (&#x27;c&#x27; extends &#x27;a&#x27; ? never : &#x27;c&#x27;)</span><br><span class="line"></span><br><span class="line">never | &#x27;b&#x27; | &#x27;c&#x27; =&gt; &#x27;b&#x27; | &#x27;c&#x27;</span><br></pre></td></tr></table></figure>
+<p>这样不就求出了<code>T-U</code>嘛。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>通过一些简单的类型题目，复习了一遍TS中基础的类型运算，刚开始做这些题目的时候还是有点吃力的，因为对这些东西并不熟悉，甚至有些点根本就不知道。要把TS学好，还是得多练啊。</p>
+<p>文章中如果有不准确，或者错误的地方。大家可以在评论区勘误一下，thank you!🤞</p>
+
+        </div>
+
+    
+
+</div>
+                <div class="footer">
+    <span>Copyright © <span id="copyright-year"></span> algok</span>
+</div>
+
+
+<link rel="stylesheet" href="/css/a11y-dark.min.css">
+
+
+<script src="/js/highlight.min.js"></script>
+
+
+<script src="/js/highlightjs-line-numbers.js"></script>
+
+
+<script>
+    hljs.initHighlightingOnLoad();
+    hljs.initLineNumbersOnLoad();
+    function setYear() {
+        const year = new Date().getFullYear()
+        document.querySelector('#copyright-year').innerHTML = year
+    }
+    setYear()
+</script>
+
+            </div>
+        </div>
+    </body>
+</html>

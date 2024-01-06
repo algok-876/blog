@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
+    <link rel="alternate icon" type="image/png" href="/img/favicon.png">
+    <title>algok | </title>
+    
+<link rel="stylesheet" href="/css/reset.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<link rel="stylesheet" href="/css/markdown.css">
+
+    
+<link rel="stylesheet" href="/css/fonts.css">
+
+<meta name="generator" content="Hexo 7.0.0"></head>
+    <body>
+        <div class="paper">
+            <div class="paper-main">
+                
+                    <div class="post-header">
+    <a class="logo" href="/">algok</a>
+    <a class="go-home" href="/">
+        <svg width="8" height="14" viewBox="0 0 8 14">
+            <path d="M7 1L1 7l6 6" stroke="#000" stroke-width="2" fill="none" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </a>
+</div>
+                
+                <div class="post-main">
+
+    
+    
+        <div class="post-main-title">
+            源码共读，使用Symbol.Iterator实现BST的中序迭代器
+        </div>
+        <div class="post-meta">
+            2024-01-06
+        </div>
+        <div class="post-md">
+            <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><ul>
+<li><strong>本文参加了由</strong><a href="https://link.juejin.cn/?target=https://lxchuan12.gitee.io" title="https://lxchuan12.gitee.io">公众号@若川视野</a> <strong>发起的每周源码共读活动，</strong>  <a target="_blank" rel="noopener" href="https://juejin.cn/post/7079706017579139102" title="https://juejin.cn/post/7079706017579139102">点击了解详情一起参与。</a></li>
+<li><strong>这是源码共读的第33期，链接：<a target="_blank" rel="noopener" href="https://juejin.cn/post/7100218384918249503">【若川视野 x 源码共读】第33期 | arrify 转数组 - 掘金 (juejin.cn)</a>。</strong></li>
+</ul>
+<p>最近看到若川大佬发起的源码共读活动，觉得很感兴趣，所以也参与了一下。选了一期最简单的先适应一下</p>
+<p>个人感觉这种学习方法还是挺高效的，在看源码的过程中，可以清楚的看到知识点是如何应用在实际场景中的。陌生的知识点也可以通过问题驱动的方式去攻克。例如，本文将介绍的<a target="_blank" rel="noopener" href="https://github.com/sindresorhus/arrify">arrify</a>这个只有十几行代码的库中涉及到的遍历器，我原本对它比较陌生，但是由于想搞懂他的代码为什么要那样写，通过阅读其他的辅助资料，一步一步地揭开了谜底。</p>
+<h2 id="arrify解析"><a href="#arrify解析" class="headerlink" title="arrify解析"></a>arrify解析</h2><p>由于代码不多，可以直接先把代码帖进来。这个函数的主要功能就是将传入的值或者对象数组化。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> <span class="keyword">function</span> <span class="title function_">arrify</span>(<span class="params">value</span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (value === <span class="literal">null</span> || value === <span class="literal">undefined</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> [];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (<span class="title class_">Array</span>.<span class="title function_">isArray</span>(value)) &#123;</span><br><span class="line">        <span class="keyword">return</span> value;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">typeof</span> value === <span class="string">&#x27;string&#x27;</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> [value];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">typeof</span> value[<span class="title class_">Symbol</span>.<span class="property">iterator</span>] === <span class="string">&#x27;function&#x27;</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> [...value];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> [value];</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>代码逻辑比较简单，前三个if条件很好理解，就不多说了。重点是最后一个if判断</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typeof</span> value[<span class="title class_">Symbol</span>.<span class="property">iterator</span>] === <span class="string">&#x27;function&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>这是在判断value这个对象的<code>Symbol.iterator</code>属性是否是一个<code>function</code>，那么问题来了</p>
+<ol>
+<li>这个<code>Symbol.iterator</code>属性是个什么东西？</li>
+<li>为什么要判断它是否存在并且类型必须是<code>function</code>类型呢？</li>
+<li>为什么一个对象如果存在这个属性并且是<code>function</code>类型，就可以使用扩展运算符直接将其扩展成一个数组呢？</li>
+</ol>
+<p>围绕着这三个问题展开学习，就很清晰了。学习链接:<a target="_blank" rel="noopener" href="https://es6.ruanyifeng.com/#docs/iterator">Iterator 和 for…of 循环 - ECMAScript 6入门</a></p>
+<h2 id="迭代器"><a href="#迭代器" class="headerlink" title="迭代器"></a>迭代器</h2><p>迭代器（Iterator）是为数据结构提供统一的访问机制。任何数据结构只要部署 Iterator 接口，就可以完成遍历操作（即依次处理该数据结构的所有成员）。</p>
+<p>Iterator的遍历过程如下：</p>
+<ol>
+<li>一个指针对象，指向当前数据结构的起始位置。也就是说，遍历器对象本质上，就是一个指针对象。</li>
+<li>第一次调用指针对象的<code>next</code>方法，可以将指针指向数据结构的第一个成员。</li>
+<li>第二次调用指针对象的<code>next</code>方法，指针就指向数据结构的第二个成员。</li>
+<li>不断调用指针对象的<code>next</code>方法，直到它指向数据结构的结束位置。</li>
+</ol>
+<p>next方法返回的数据结构如下</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="comment">// value表示当前成员的值</span></span><br><span class="line">    <span class="attr">value</span>: xxx,</span><br><span class="line">    <span class="comment">// true表示已经遍历完成，false 示尚未遍历完成</span></span><br><span class="line">    <span class="attr">done</span>: <span class="literal">true</span> or <span class="literal">false</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>ES6 规定，默认的 Iterator 接口部署在数据结构的<code>Symbol.iterator</code>属性，或者说，一个数据结构只要具有<code>Symbol.iterator</code>属性，就可以认为是“可迭代的”。看个例子</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> array = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]</span><br><span class="line"><span class="comment">// 获取array的默认遍历器</span></span><br><span class="line"><span class="keyword">const</span> arrayIterator = array[<span class="title class_">Symbol</span>.<span class="property">iterator</span>]()</span><br><span class="line"><span class="comment">// 手动调用next方法遍历数组</span></span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(arrayIterator.<span class="title function_">next</span>())</span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(arrayIterator.<span class="title function_">next</span>())</span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(arrayIterator.<span class="title function_">next</span>())</span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(arrayIterator.<span class="title function_">next</span>())</span><br><span class="line"></span><br><span class="line"><span class="comment">// 运行结果：</span></span><br><span class="line">&#123; <span class="attr">value</span>: <span class="number">1</span>, <span class="attr">done</span>: <span class="literal">false</span> &#125;</span><br><span class="line">&#123; <span class="attr">value</span>: <span class="number">2</span>, <span class="attr">done</span>: <span class="literal">false</span> &#125;</span><br><span class="line">&#123; <span class="attr">value</span>: <span class="number">3</span>, <span class="attr">done</span>: <span class="literal">false</span> &#125;</span><br><span class="line">&#123; <span class="attr">value</span>: <span class="literal">undefined</span>, <span class="attr">done</span>: <span class="literal">true</span> &#125;</span><br></pre></td></tr></table></figure>
+
+<p>其他内置的集合类型也都部署了默认的iterator接口，例如Map, Set</p>
+<p>小结：至此前面提出的前两个问题就有答案了，<code>Symbol.iterator</code>是默认的遍历器接口，如果存在这个属性并且是<code>function</code>类型就表明这个数据结构是可遍历的。可遍历的数据结构转数组时就可以把里面的每一个成员都放入数组。</p>
+<h2 id="for…of循环"><a href="#for…of循环" class="headerlink" title="for…of循环"></a>for…of循环</h2><p>for…of循环可以遍历一个可迭代对象，每次取得该对象中的一个元素。由于可迭代对象部署了 <code>Symbol.iterator</code>属性，for…of循环每次都会调用<code>Symbol.iterator</code>接口返回的next方法。<code>for...of</code>循环可以使用的范围包括数组、Set 和 Map 结构、某些类似数组的对象（比如<code>arguments</code>对象、DOM NodeList 对象）以及字符串。</p>
+<p>除此之外，使用扩展运算符，也会调用<code>Symbol.iterator</code>获取元素，例如</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">RangeIterator</span> &#123;</span><br><span class="line">    <span class="title function_">constructor</span>(<span class="params">start, stop</span>) &#123;</span><br><span class="line">        <span class="variable language_">this</span>.<span class="property">start</span> = start</span><br><span class="line">        <span class="variable language_">this</span>.<span class="property">stop</span> = stop</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    [<span class="title class_">Symbol</span>.<span class="property">iterator</span>] () &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="variable language_">this</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    next () &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="variable language_">this</span>.<span class="property">start</span> === <span class="variable language_">this</span>.<span class="property">stop</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> &#123;</span><br><span class="line">                <span class="attr">value</span>: <span class="literal">undefined</span>,</span><br><span class="line">                <span class="attr">done</span>: <span class="literal">true</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> &#123;</span><br><span class="line">            <span class="attr">value</span>: <span class="variable language_">this</span>.<span class="property">start</span>++,</span><br><span class="line">            <span class="attr">done</span>: <span class="literal">false</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>([...<span class="keyword">new</span> <span class="title class_">RangeIterator</span>(<span class="number">1</span>, <span class="number">10</span>)])  <span class="comment">// [1, 2, 3, 4, 5, 6, 7, 8, 9]</span></span><br></pre></td></tr></table></figure>
+
+<p>RangeIterator类的实例是一个生成<code>start..stop</code>之间数字的遍历器，使用扩展运算符就可以获取区间内的数字。<br>至此，之前的第三个问题也得到了答案，对于部署了<code>Symbol.iterator</code>接口的对象，可以通过扩展运算符直接展开</p>
+<h2 id="结合JS遍历器实现一个BST的中序迭代器"><a href="#结合JS遍历器实现一个BST的中序迭代器" class="headerlink" title="结合JS遍历器实现一个BST的中序迭代器"></a>结合JS遍历器实现一个BST的中序迭代器</h2><h3 id="BST二叉搜索树"><a href="#BST二叉搜索树" class="headerlink" title="BST二叉搜索树"></a>BST二叉搜索树</h3><p>了解数据结构的同学肯定对二叉搜索树不陌生，相对于静态查找，二叉搜索树是一种很高效的查找结构。回顾一下它的性质：</p>
+<ol>
+<li>对于任意节点，其左子树上的所有节点的值都小于该节点的值。</li>
+<li>对于任意节点，其右子树上的所有节点的值都大于该节点的值。</li>
+<li>左子树和右子树都必须是二叉搜索树。</li>
+</ol>
+<h3 id="Leetcode-173-二叉搜索树迭代器"><a href="#Leetcode-173-二叉搜索树迭代器" class="headerlink" title="Leetcode 173. 二叉搜索树迭代器"></a>Leetcode <a target="_blank" rel="noopener" href="https://leetcode.cn/problems/binary-search-tree-iterator/">173. 二叉搜索树迭代器</a></h3><p><img src="/a5d25364713d41cd8d36729e19c0883b~tplv-k3u1fbpfcp-jj-mark-3024-0-0-0-q75.awebp" alt="image.png"></p>
+<p>分析题目：<br>题目的核心就是想让我们实现一个next函数，每次调用next函数都会按照中序遍历序列返回下一个元素。那很显然我们要对这颗二叉搜索树进行中序遍历了，但是这里需要注意，不能使用递归的方式，因为题目中的next函数是每调用一次，指针就指向下一个节点。递归是无法暂停的。那就需要用迭代的方式来模拟递归。</p>
+<p>具体的思路可以参考：<a target="_blank" rel="noopener" href="https://leetcode.cn/problems/binary-search-tree-iterator/solution/fu-xue-ming-zhu-dan-diao-zhan-die-dai-la-dkrm/">【负雪明烛】单调栈！迭代来自对递归的理解 - 二叉搜索树迭代器 - 力扣（LeetCode）</a></p>
+<p>我已使用TS实现了BST的数据结构，将在此基础上添加next函数，并结合遍历器来支持JS的语法特性</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">BinarySearchTree</span>&lt;T&gt; &#123;</span><br><span class="line">  <span class="keyword">protected</span> <span class="attr">root</span>: <span class="title class_">Node</span>&lt;T&gt; | <span class="literal">null</span>;</span><br><span class="line">  <span class="keyword">private</span> <span class="attr">stack</span>: <span class="title class_">Node</span>&lt;T&gt;[];</span><br><span class="line">  <span class="title function_">constructor</span>(<span class="params">list: T[], <span class="keyword">public</span> compareFn = defaultCompare</span>) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">root</span> = <span class="literal">null</span>;</span><br><span class="line">    <span class="comment">// 遍历初始节点序列，构造二叉搜索树</span></span><br><span class="line">    list.<span class="title function_">forEach</span>(<span class="function"><span class="params">item</span> =&gt;</span> &#123;</span><br><span class="line">      <span class="variable language_">this</span>.<span class="title function_">insert</span>(item);</span><br><span class="line">    &#125;);</span><br><span class="line">    <span class="comment">// 初始化栈</span></span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">stack</span> = [];</span><br><span class="line">    <span class="keyword">let</span> node = (<span class="variable language_">this</span>.<span class="property">root</span> <span class="keyword">as</span> <span class="built_in">unknown</span>) <span class="keyword">as</span> (<span class="title class_">Node</span>&lt;T&gt; | <span class="literal">null</span>);</span><br><span class="line">    <span class="comment">// 将最左的一条分支的节点加入栈中</span></span><br><span class="line">    <span class="keyword">while</span> (node !== <span class="literal">null</span>) &#123;</span><br><span class="line">      <span class="variable language_">this</span>.<span class="property">stack</span>.<span class="title function_">push</span>(node);</span><br><span class="line">      node = node.<span class="property">left</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 部署默认的遍历器接口，支持for...of循环, 扩展运算符</span></span><br><span class="line">  [<span class="title class_">Symbol</span>.<span class="property">iterator</span>]() &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="variable language_">this</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 核心next方法</span></span><br><span class="line">  <span class="title function_">next</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="comment">// 如果栈中无节点表示遍历结束</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="variable language_">this</span>.<span class="property">stack</span>.<span class="property">length</span> === <span class="number">0</span>) &#123;</span><br><span class="line">      <span class="keyword">return</span> &#123;</span><br><span class="line">        <span class="attr">value</span>: <span class="literal">undefined</span>,</span><br><span class="line">        <span class="attr">done</span>: <span class="literal">true</span></span><br><span class="line">      &#125;;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 弹出当前节点</span></span><br><span class="line">    <span class="keyword">const</span> curr = <span class="variable language_">this</span>.<span class="property">stack</span>.<span class="title function_">pop</span>();</span><br><span class="line">    <span class="keyword">if</span> (curr?.<span class="property">right</span>) &#123;</span><br><span class="line">      <span class="keyword">let</span> node = curr.<span class="property">right</span>;</span><br><span class="line">      <span class="keyword">while</span> (node !== <span class="literal">null</span>) &#123;</span><br><span class="line">        <span class="variable language_">this</span>.<span class="property">stack</span>.<span class="title function_">push</span>(node);</span><br><span class="line">        node = node.<span class="property">left</span> <span class="keyword">as</span> <span class="title class_">Node</span>&lt;T&gt;;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 返回当前值</span></span><br><span class="line">    <span class="keyword">return</span> &#123;</span><br><span class="line">      <span class="attr">value</span>: curr?.<span class="property">key</span>,</span><br><span class="line">      <span class="attr">done</span>: <span class="literal">false</span></span><br><span class="line">    &#125;;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="title function_">insert</span>(<span class="params">key: T</span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (!<span class="variable language_">this</span>.<span class="property">root</span>) &#123;</span><br><span class="line">      <span class="variable language_">this</span>.<span class="property">root</span> = <span class="keyword">new</span> <span class="title class_">Node</span>(key);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      <span class="variable language_">this</span>.<span class="title function_">insertNode</span>(<span class="variable language_">this</span>.<span class="property">root</span>, key);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="title function_">insertNode</span>(<span class="params">node: Node&lt;T&gt;, key: T</span>) &#123;</span><br><span class="line">    <span class="comment">// 向二叉搜索树中插入一个节点，省略实现</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>使用如下代码来测试一下这个迭代器是否生效</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> tree = <span class="keyword">new</span> <span class="title class_">BinarySearchTree</span>&lt;<span class="built_in">number</span>&gt;([<span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">8</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">9</span>]);</span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;展开结果：&#x27;</span>, [...tree]);</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/c49d7cef25bb477b8738211ba36362ad~tplv-k3u1fbpfcp-watermark.image" alt="image.png"></p>
+<p>从运行结果看到，我们确实得到了这颗BST的中序遍历序列（BST的中序序列是有序的）。可以直接通过调用next方法动态的获取下一个元素，可能更加直观.</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> tree = <span class="keyword">new</span> <span class="title class_">BinarySearchTree</span>&lt;<span class="built_in">number</span>&gt;([<span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">8</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">9</span>]);</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> element1 = tree.<span class="title function_">next</span>();</span><br><span class="line"><span class="keyword">const</span> element2 = tree.<span class="title function_">next</span>();</span><br><span class="line"><span class="keyword">const</span> element3 = tree.<span class="title function_">next</span>();</span><br><span class="line"><span class="keyword">const</span> element4 = tree.<span class="title function_">next</span>();</span><br><span class="line"></span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;element1&#x27;</span>, element1);</span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;element2&#x27;</span>, element2);</span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;element3&#x27;</span>, element3);</span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;element4&#x27;</span>, element4);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><img src="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/748f171e95e24c1dae4b4085de18b000~tplv-k3u1fbpfcp-watermark.image" alt="image.png"></p>
+<p>每调用一次next方法就会返回这颗BST的中序遍历序列下的下一个元素。这也符合Leetcode的题意，此外还结合了JS的遍历器来支持一些特殊语法。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>迭代器是一种统一的访问接口，使得不同的数据结构可以使用统一的方法处理。<code>Symbol.iterator</code>是默认的迭代器接口，拥有此接口的对象是可遍历的。调用这个方法就会返回一个带有next方法的对象，而每次调用next方法就可以逐个元素地遍历这个数据结构了。这种机制在自定义的数据结构中非常有用，通过二叉搜索树的迭代器这个例子也展示了这种机制的应用。</p>
+
+        </div>
+
+    
+
+</div>
+                <div class="footer">
+    <span>Copyright © <span id="copyright-year"></span> algok</span>
+</div>
+
+
+<link rel="stylesheet" href="/css/a11y-dark.min.css">
+
+
+<script src="/js/highlight.min.js"></script>
+
+
+<script src="/js/highlightjs-line-numbers.js"></script>
+
+
+<script>
+    hljs.initHighlightingOnLoad();
+    hljs.initLineNumbersOnLoad();
+    function setYear() {
+        const year = new Date().getFullYear()
+        document.querySelector('#copyright-year').innerHTML = year
+    }
+    setYear()
+</script>
+
+            </div>
+        </div>
+    </body>
+</html>
