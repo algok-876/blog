@@ -4,24 +4,24 @@
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
         name="viewport" />
-    <link rel="alternate icon" type="image/png" href="/img/favicon.png">
+    <link rel="alternate icon" type="image/png" href="/blog/img/favicon.png">
     <title>
         algok | 
     </title>
     
-<link rel="stylesheet" href="/css/reset.css">
+<link rel="stylesheet" href="/blog/css/reset.css">
 
         
-<link rel="stylesheet" href="/css/image.css">
+<link rel="stylesheet" href="/blog/css/image.css">
 
             
-<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/blog/css/style.css">
 
                 
-<link rel="stylesheet" href="/css/markdown.css">
+<link rel="stylesheet" href="/blog/css/markdown.css">
 
                     
-<link rel="stylesheet" href="/css/fonts.css">
+<link rel="stylesheet" href="/blog/css/fonts.css">
 
 <meta name="generator" content="Hexo 7.0.0"></head>
     <body>
@@ -29,8 +29,8 @@
             <div class="paper-main">
                 
                     <div class="post-header">
-    <a class="logo" href="/">algok</a>
-    <a class="go-home" href="/">
+    <a class="logo" href="/blog/">algok</a>
+    <a class="go-home" href="/blog/">
         <svg width="8" height="14" viewBox="0 0 8 14">
             <path d="M7 1L1 7l6 6" stroke="#000" stroke-width="2" fill="none" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -94,7 +94,7 @@
 <li>对于任意节点，其右子树上的所有节点的值都大于该节点的值。</li>
 <li>左子树和右子树都必须是二叉搜索树。</li>
 </ol>
-<h3 id="Leetcode-173-二叉搜索树迭代器"><a href="#Leetcode-173-二叉搜索树迭代器" class="headerlink" title="Leetcode 173. 二叉搜索树迭代器"></a>Leetcode <a target="_blank" rel="noopener" href="https://leetcode.cn/problems/binary-search-tree-iterator/">173. 二叉搜索树迭代器</a></h3><p><img src="/uncategorized/symbol-bst/a5d25364713d41cd8d36729e19c0883b~tplv-k3u1fbpfcp-jj-mark-3024-0-0-0-q75.awebp.webp" alt="image.png"></p>
+<h3 id="Leetcode-173-二叉搜索树迭代器"><a href="#Leetcode-173-二叉搜索树迭代器" class="headerlink" title="Leetcode 173. 二叉搜索树迭代器"></a>Leetcode <a target="_blank" rel="noopener" href="https://leetcode.cn/problems/binary-search-tree-iterator/">173. 二叉搜索树迭代器</a></h3><p><img src="/blog/uncategorized/symbol-bst/a5d25364713d41cd8d36729e19c0883b~tplv-k3u1fbpfcp-jj-mark-3024-0-0-0-q75.awebp.webp" alt="image.png"></p>
 <p>分析题目：<br>题目的核心就是想让我们实现一个next函数，每次调用next函数都会按照中序遍历序列返回下一个元素。那很显然我们要对这颗二叉搜索树进行中序遍历了，但是这里需要注意，不能使用递归的方式，因为题目中的next函数是每调用一次，指针就指向下一个节点。递归是无法暂停的。那就需要用迭代的方式来模拟递归。</p>
 <p>具体的思路可以参考：<a target="_blank" rel="noopener" href="https://leetcode.cn/problems/binary-search-tree-iterator/solution/fu-xue-ming-zhu-dan-diao-zhan-die-dai-la-dkrm/">【负雪明烛】单调栈！迭代来自对递归的理解 - 二叉搜索树迭代器 - 力扣（LeetCode）</a></p>
 <p>我已使用TS实现了BST的数据结构，将在此基础上添加next函数，并结合遍历器来支持JS的语法特性</p>
@@ -103,11 +103,11 @@
 <p>使用如下代码来测试一下这个迭代器是否生效</p>
 <figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> tree = <span class="keyword">new</span> <span class="title class_">BinarySearchTree</span>&lt;<span class="built_in">number</span>&gt;([<span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">8</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">9</span>]);</span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;展开结果：&#x27;</span>, [...tree]);</span><br></pre></td></tr></table></figure>
 
-<p><img src="/uncategorized/symbol-bst/c49d7cef25bb477b8738211ba36362ad~tplv-k3u1fbpfcp-jj-mark-3024-0-0-0-q75.awebp.webp" alt="image.png"></p>
+<p><img src="/blog/uncategorized/symbol-bst/c49d7cef25bb477b8738211ba36362ad~tplv-k3u1fbpfcp-jj-mark-3024-0-0-0-q75.awebp.webp" alt="image.png"></p>
 <p>从运行结果看到，我们确实得到了这颗BST的中序遍历序列（BST的中序序列是有序的）。可以直接通过调用next方法动态的获取下一个元素，可能更加直观.</p>
 <figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> tree = <span class="keyword">new</span> <span class="title class_">BinarySearchTree</span>&lt;<span class="built_in">number</span>&gt;([<span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">8</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">9</span>]);</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> element1 = tree.<span class="title function_">next</span>();</span><br><span class="line"><span class="keyword">const</span> element2 = tree.<span class="title function_">next</span>();</span><br><span class="line"><span class="keyword">const</span> element3 = tree.<span class="title function_">next</span>();</span><br><span class="line"><span class="keyword">const</span> element4 = tree.<span class="title function_">next</span>();</span><br><span class="line"></span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;element1&#x27;</span>, element1);</span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;element2&#x27;</span>, element2);</span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;element3&#x27;</span>, element3);</span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;element4&#x27;</span>, element4);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
-<p><img src="/uncategorized/symbol-bst/748f171e95e24c1dae4b4085de18b000~tplv-k3u1fbpfcp-jj-mark-3024-0-0-0-q75.awebp.webp" alt="image.png"></p>
+<p><img src="/blog/uncategorized/symbol-bst/748f171e95e24c1dae4b4085de18b000~tplv-k3u1fbpfcp-jj-mark-3024-0-0-0-q75.awebp.webp" alt="image.png"></p>
 <p>每调用一次next方法就会返回这颗BST的中序遍历序列下的下一个元素。这也符合Leetcode的题意，此外还结合了JS的遍历器来支持一些特殊语法。</p>
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>迭代器是一种统一的访问接口，使得不同的数据结构可以使用统一的方法处理。<code>Symbol.iterator</code>是默认的迭代器接口，拥有此接口的对象是可遍历的。调用这个方法就会返回一个带有next方法的对象，而每次调用next方法就可以逐个元素地遍历这个数据结构了。这种机制在自定义的数据结构中非常有用，通过二叉搜索树的迭代器这个例子也展示了这种机制的应用。</p>
 
@@ -123,16 +123,16 @@
 </div>
 
 
-<link rel="stylesheet" href="/css/a11y-dark.min.css">
+<link rel="stylesheet" href="/blog/css/a11y-dark.min.css">
 
     
-<script src="/js/highlight.min.js"></script>
+<script src="/blog/js/highlight.min.js"></script>
 
         
-<script src="/js/image.js"></script>
+<script src="/blog/js/image.js"></script>
 
             
-<script src="/js/highlightjs-line-numbers.js"></script>
+<script src="/blog/js/highlightjs-line-numbers.js"></script>
 
 
                 <script>
