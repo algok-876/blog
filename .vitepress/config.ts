@@ -11,7 +11,8 @@ export default defineConfig({
     // https://vitepress.dev/reference/default-theme-config
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'English', link: '/english' }
+      { text: 'English', link: '/english' },
+      { text: 'Rust', link: '/rust' }
     ],
 
     sidebar: [
